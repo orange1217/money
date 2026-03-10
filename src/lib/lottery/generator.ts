@@ -2,9 +2,7 @@ import { LotteryType, NumberBall, LotteryResult, Fucai3DMode, Happy8Count } from
 import { LOTTERY_RULES } from './rules';
 import {
   secureRandomUniqueInts,
-  secureRandomIntsWithRepeat,
-  secureWeightedRandom,
-  weightedSample
+  secureRandomIntsWithRepeat
 } from '../math/random';
 
 /**

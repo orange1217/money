@@ -1,8 +1,6 @@
 import { LotteryType, NumberBall, ProbabilityAnalysis } from './types';
 import { LOTTERY_RULES } from './rules';
 import {
-  calculateCombinations,
-  binomialProbability,
   analyzeOddEvenRatio,
   analyzeHighLowRatio,
   analyzeConsecutiveNumbers,

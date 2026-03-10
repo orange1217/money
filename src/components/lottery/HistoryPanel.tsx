@@ -48,7 +48,7 @@ export const HistoryPanel = React.memo(function HistoryPanel({
       </CardHeader>
       <CardContent>
         <div className="space-y-2 sm:space-y-3 max-h-[200px] sm:max-h-[320px] overflow-y-auto">
-          {history.map((item, index) => (
+          {history.map((item) => (
             <div
               key={item.id}
               className="p-2 sm:p-3 bg-muted/50 rounded-lg border border-border"
