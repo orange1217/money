@@ -1,5 +1,6 @@
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import { LotteryGenerator } from './components/lottery/LotteryGenerator'
+import { HistoricalAnalysisPage } from './components/analysis/HistoricalAnalysisPage'
 
 function NavigationTabs() {
   const location = useLocation()
@@ -39,7 +40,7 @@ function App() {
 
       <Routes>
         <Route path="/" element={<LotteryGenerator />} />
-        <Route path="/analysis" element={<div className="container mx-auto px-3 sm:px-4 py-6"><div className="text-center text-muted-foreground">历史分析功能开发中...</div></div>} />
+        <Route path="/analysis" element={<HistoricalAnalysisPage />} />
       </Routes>
 
       {/* 页脚 */}
