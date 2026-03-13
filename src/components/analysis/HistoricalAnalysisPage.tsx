@@ -4,6 +4,7 @@ import { HistoricalDraw } from '@/types/analysis';
 import { historicalStorage } from '@/lib/analysis/historicalStorage';
 import { DrawInputForm } from './DrawInputForm';
 import { DrawList } from './DrawList';
+import { StatisticsPanel } from './StatisticsPanel';
 
 export function HistoricalAnalysisPage() {
   const [draws, setDraws] = useState<HistoricalDraw[]>([]);
@@ -82,14 +83,24 @@ export function HistoricalAnalysisPage() {
         onClearAll={handleClearAll}
       />
 
-      {/* Analysis Dashboard - will be added in Phase 3 */}
+      {/* Analysis Dashboard - Statistics Panel */}
+      {draws.length >= 1 && (
+        <div className="mt-6">
+          <div className="mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold">统计分析</h2>
+          </div>
+          <StatisticsPanel draws={filteredDraws} filterType={filterType} />
+        </div>
+      )}
+
+      {/* Advanced Analysis Placeholder */}
       {draws.length >= 1 && (
         <div className="mt-6 p-6 bg-muted/20 rounded-xl border border-dashed border-muted-foreground/30 text-center">
           <p className="text-muted-foreground">
-            统计分析功能将在后续阶段实现
+            高级分析功能将在后续阶段实现
           </p>
           <p className="text-sm text-muted-foreground/70 mt-1">
-            当前已添加 {draws.length} 期数据
+            包括：连号分析、AC值分布、重号分析、遗漏号码、区间分布
           </p>
         </div>
       )}
