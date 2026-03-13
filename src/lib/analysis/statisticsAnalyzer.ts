@@ -1,5 +1,5 @@
 import { LotteryType } from '@/lib/lottery/types';
-import type { HistoricalDraw, NumberFrequency, StatisticsSummary } from '@/types/analysis';
+import type { HistoricalDraw, NumberFrequency, StatisticsSummary, AdvancedMetrics, ZoneDistribution } from '@/types/analysis';
 
 /**
  * Number range configuration for analysis
@@ -208,5 +208,224 @@ export class StatisticsAnalyzer {
       range.push(i);
     }
     return range;
+  }
+
+  // ==================== ADVANCED ANALYSIS METHODS ====================
+
+  /**
+   * Analyze consecutive number patterns
+   * Returns array where index = consecutive count, value = frequency
+   */
+  static analyzeConsecutivePatterns(draws: HistoricalDraw[]): number[] {
+    const patternMap = new Map<number, number>();
+
+    draws.forEach(draw => {
+      const sorted = [...draw.numbers].sort((a, b) => a - b);
+      let consecutiveCount = 0;
+      let maxConsecutive = 0;
+
+      for (let i = 0; i < sorted.length - 1; i++) {
+        if (sorted[i + 1] === sorted[i] + 1) {
+          consecutiveCount++;
+        } else {
+          if (consecutiveCount > 0) {
+            maxConsecutive = Math.max(maxConsecutive, consecutiveCount);
+          }
+          consecutiveCount = 0;
+        }
+      }
+      if (consecutiveCount > 0) {
+        maxConsecutive = Math.max(maxConsecutive, consecutiveCount);
+      }
+
+      // Count as number of consecutive pairs (2-consecutive means 2 numbers in a row)
+      const pairCount = maxConsecutive > 0 ? maxConsecutive : 0;
+      patternMap.set(pairCount, (patternMap.get(pairCount) || 0) + 1);
+    });
+
+    // Convert to array, index = consecutive count
+    const maxConsecutive = Math.max(...patternMap.keys(), 0);
+    const result: number[] = [];
+    for (let i = 0; i <= maxConsecutive; i++) {
+      result.push(patternMap.get(i) || 0);
+    }
+    return result;
+  }
+
+  /**
+   * Calculate AC value (Arithmetic Complexity)
+   * AC value = count of unique differences between all pairs - (n-1)
+   */
+  static calculateACValue(numbers: number[]): number {
+    if (numbers.length < 2) return 0;
+
+    const sorted = [...numbers].sort((a, b) => a - b);
+    const differences = new Set<number>();
+
+    for (let i = 0; i < sorted.length; i++) {
+      for (let j = i + 1; j < sorted.length; j++) {
+        differences.add(sorted[j] - sorted[i]);
+      }
+    }
+
+    return differences.size - (sorted.length - 1);
+  }
+
+  /**
+   * Get AC value distribution across all draws
+   */
+  static getACValueDistribution(draws: HistoricalDraw[]): Record<number, number> {
+    const distribution: Record<number, number> = {};
+
+    draws.forEach(draw => {
+      const ac = this.calculateACValue(draw.numbers);
+      distribution[ac] = (distribution[ac] || 0) + 1;
+    });
+
+    return distribution;
+  }
+
+  /**
+   * Calculate repeat number rate
+   * Percentage of draws with at least one number from previous draw
+   */
+  static calculateRepeatRate(draws: HistoricalDraw[]): number {
+    if (draws.length < 2) return 0;
+
+    let repeatCount = 0;
+
+    for (let i = 1; i < draws.length; i++) {
+      const current = new Set(draws[i].numbers);
+      const previous = draws[i - 1].numbers;
+
+      const hasRepeat = previous.some(n => current.has(n));
+      if (hasRepeat) repeatCount++;
+    }
+
+    return Math.round((repeatCount / (draws.length - 1)) * 1000) / 10;
+  }
+
+  /**
+   * Get missing numbers with consecutive miss counts
+   */
+  static getMissingNumbers(draws: HistoricalDraw[], type: LotteryType): { number: number; misses: number }[] {
+    const allNumbers = this.getNumberRange(type);
+    const lastSeenMap = new Map<number, number>();
+
+    // Track last occurrence index
+    draws.forEach((draw, index) => {
+      draw.numbers.forEach(num => {
+        lastSeenMap.set(num, index);
+      });
+    });
+
+    // Calculate misses for each number
+    const result: { number: number; misses: number }[] = [];
+    const totalDraws = draws.length;
+
+    allNumbers.forEach(num => {
+      const lastIndex = lastSeenMap.get(num);
+      const misses = lastIndex === undefined ? totalDraws : totalDraws - 1 - lastIndex;
+      result.push({ number: num, misses });
+    });
+
+    // Sort by miss count (highest first)
+    return result.sort((a, b) => b.misses - a.misses);
+  }
+
+  /**
+   * Get zone distribution for a lottery type
+   */
+  static getZoneDistribution(draws: HistoricalDraw[], type: LotteryType): ZoneDistribution {
+    const zones = this.getZonesForType(type);
+    const zoneCounts = zones.map(() => 0);
+
+    draws.forEach(draw => {
+      draw.numbers.forEach(num => {
+        zones.forEach((zone, index) => {
+          const [min, max] = zone.range;
+          if (num >= min && num <= max) {
+            zoneCounts[index]++;
+          }
+        });
+      });
+    });
+
+    const totalNumbers = draws.reduce((sum, draw) => sum + draw.numbers.length, 0);
+
+    return {
+      zones: zones.map((zone, index) => ({
+        name: zone.name,
+        range: zone.range,
+        count: zoneCounts[index],
+        percentage: totalNumbers > 0
+          ? Math.round((zoneCounts[index] / totalNumbers) * 1000) / 10
+          : 0
+      }))
+    };
+  }
+
+  /**
+   * Get zone definitions for a lottery type
+   */
+  private static getZonesForType(type: LotteryType): Array<{ name: string; range: [number, number] }> {
+    switch (type) {
+      case LotteryType.DOUBLE_COLOR:
+        return [
+          { name: '一区', range: [1, 11] as [number, number] },
+          { name: '二区', range: [12, 22] as [number, number] },
+          { name: '三区', range: [23, 33] as [number, number] }
+        ];
+      case LotteryType.SUPER_LOTTO:
+        return [
+          { name: '一区', range: [1, 11] as [number, number] },
+          { name: '二区', range: [12, 23] as [number, number] },
+          { name: '三区', range: [24, 35] as [number, number] }
+        ];
+      case LotteryType.HAPPY_8:
+        return [
+          { name: '一区', range: [1, 20] as [number, number] },
+          { name: '二区', range: [21, 40] as [number, number] },
+          { name: '三区', range: [41, 60] as [number, number] },
+          { name: '四区', range: [61, 80] as [number, number] }
+        ];
+      case LotteryType.FUCAI_3D:
+        return [
+          { name: '一区', range: [0, 3] as [number, number] },
+          { name: '二区', range: [4, 6] as [number, number] },
+          { name: '三区', range: [7, 9] as [number, number] }
+        ];
+      default:
+        return [];
+    }
+  }
+
+  /**
+   * Generate complete advanced metrics
+   */
+  static generateAdvancedMetrics(draws: HistoricalDraw[], type: LotteryType | 'all'): AdvancedMetrics {
+    if (draws.length === 0) {
+      return {
+        consecutivePatterns: [],
+        acValueDistribution: {},
+        repeatNumberRate: 0,
+        missingNumbers: [],
+        zoneDistribution: { zones: [] }
+      };
+    }
+
+    const filteredDraws = type === 'all'
+      ? draws
+      : draws.filter(d => d.lotteryType === type);
+
+    const analysisType = type === 'all' ? LotteryType.DOUBLE_COLOR : type;
+
+    return {
+      consecutivePatterns: this.analyzeConsecutivePatterns(filteredDraws),
+      acValueDistribution: this.getACValueDistribution(filteredDraws),
+      repeatNumberRate: this.calculateRepeatRate(filteredDraws),
+      missingNumbers: this.getMissingNumbers(filteredDraws, analysisType),
+      zoneDistribution: this.getZoneDistribution(filteredDraws, analysisType)
+    };
   }
 }
