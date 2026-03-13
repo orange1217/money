@@ -8,6 +8,9 @@ import { StatisticsPanel } from './StatisticsPanel';
 import { AdvancedAnalysisPanel } from './AdvancedAnalysisPanel';
 import { ChartsPanel } from './ChartsPanel';
 import { RecommendationsPanel } from './RecommendationsPanel';
+import { Button } from '@/components/ui/button';
+import { addSampleData } from '@/lib/analysis/sampleData';
+import { Database } from 'lucide-react';
 
 export function HistoricalAnalysisPage() {
   const [draws, setDraws] = useState<HistoricalDraw[]>([]);
@@ -53,6 +56,12 @@ export function HistoricalAnalysisPage() {
     setIsStorageEnabled(enabled);
   };
 
+  // Handle adding sample data
+  const handleAddSampleData = () => {
+    const newDraws = addSampleData();
+    setDraws(newDraws);
+  };
+
   // Filter draws by lottery type
   const filteredDraws = filterType === 'all'
     ? draws
@@ -65,9 +74,20 @@ export function HistoricalAnalysisPage() {
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 sm:mb-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
           历史开奖分析
         </h1>
-        <p className="text-muted-foreground text-xs sm:text-sm md:text-base">
+        <p className="text-muted-foreground text-xs sm:text-sm md:text-base mb-4">
           添加历史开奖数据，查看统计分析与号码推荐
         </p>
+        {draws.length < 5 && (
+          <Button
+            onClick={handleAddSampleData}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Database className="w-4 h-4" />
+            添加示例数据 (共32期)
+          </Button>
+        )}
       </div>
 
       {/* Input Form */}
