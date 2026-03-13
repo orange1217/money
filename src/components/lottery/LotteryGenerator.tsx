@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
@@ -15,6 +15,41 @@ export function LotteryGenerator() {
   const [groupCount, setGroupCount] = useState([5]);
   const [isAnimating, setIsAnimating] = useState(false);
   const [history, setHistory] = useState<GenerationHistory[]>([]);
+  const [prefillNotice, setPrefillNotice] = useState(false);
+
+  // Check for prefill numbers from recommendations
+  useEffect(() => {
+    const prefillData = sessionStorage.getItem('prefillNumbers');
+    if (prefillData) {
+      try {
+        const data = JSON.parse(prefillData);
+        setSelectedType(data.lotteryType);
+
+        // Convert numbers to NumberBall format
+        const balls: NumberBallType[] = data.numbers.map((n: number) => ({
+          value: n,
+          color: 'red'
+        }));
+
+        if (data.specialNumbers) {
+          data.specialNumbers.forEach((n: number) => {
+            balls.push({ value: n, color: 'blue', isSpecial: true });
+          });
+        }
+
+        setGeneratedNumbers([balls]);
+        setPrefillNotice(true);
+
+        // Clear sessionStorage after using
+        sessionStorage.removeItem('prefillNumbers');
+
+        // Hide notice after 5 seconds
+        setTimeout(() => setPrefillNotice(false), 5000);
+      } catch (e) {
+        console.error('Failed to parse prefill data:', e);
+      }
+    }
+  }, []);
 
   const handleGenerate = () => {
     setIsAnimating(true);
@@ -82,6 +117,16 @@ export function LotteryGenerator() {
           基于 Web Crypto API 加密级随机数生成，公平公正
         </p>
       </div>
+
+      {/* Prefill Notice */}
+      {prefillNotice && (
+        <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg flex items-center gap-3">
+          <Sparkles className="w-5 h-5 text-green-500" />
+          <p className="text-sm text-green-700 dark:text-green-400">
+            已填入推荐号码！点击"生成号码"可生成新的随机号码。
+          </p>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
         {/* 左侧：选择器和控制面板 */}

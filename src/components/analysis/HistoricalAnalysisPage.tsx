@@ -6,6 +6,8 @@ import { DrawInputForm } from './DrawInputForm';
 import { DrawList } from './DrawList';
 import { StatisticsPanel } from './StatisticsPanel';
 import { AdvancedAnalysisPanel } from './AdvancedAnalysisPanel';
+import { ChartsPanel } from './ChartsPanel';
+import { RecommendationsPanel } from './RecommendationsPanel';
 
 export function HistoricalAnalysisPage() {
   const [draws, setDraws] = useState<HistoricalDraw[]>([]);
@@ -104,15 +106,20 @@ export function HistoricalAnalysisPage() {
         </div>
       )}
 
-      {/* Charts and Recommendations Placeholder */}
+      {/* Charts Panel */}
       {draws.length >= 1 && (
-        <div className="mt-6 p-6 bg-muted/20 rounded-xl border border-dashed border-muted-foreground/30 text-center">
-          <p className="text-muted-foreground">
-            图表和智能推荐功能将在后续阶段实现
-          </p>
-          <p className="text-sm text-muted-foreground/70 mt-1">
-            包括：号码频率图表、和值趋势图、奇偶占比图、遗漏热力图、智能推荐
-          </p>
+        <div className="mt-6">
+          <div className="mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold">数据图表</h2>
+          </div>
+          <ChartsPanel draws={filteredDraws} filterType={filterType} />
+        </div>
+      )}
+
+      {/* Recommendations Panel */}
+      {draws.length >= 1 && (
+        <div className="mt-6">
+          <RecommendationsPanel draws={filteredDraws} filterType={filterType} />
         </div>
       )}
     </div>
